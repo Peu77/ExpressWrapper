@@ -28,7 +28,7 @@ export function initControllers(express: Express, controllers: Controller[]): vo
     controllers.forEach(controller => {
             controller.routes.forEach(route => {
                     express[route.type.toString()](`${controller.prefix}/${route.path}`, (
-                            req: Express.Request, res: Express.Response
+                            req: any, res: any
                         ) => {
                             // find request listener by route path and type
                             const requestListener: RequestListener = controller.service.listeners.find(
@@ -40,6 +40,7 @@ export function initControllers(express: Express, controllers: Controller[]): vo
                                 res.status(404).send(`Service wasn't registered for route ${controller.prefix}/${route.path}`);
                                 return;
                             }
+
                             const responseData: ServiceResponseData = requestListener.execute(req.body);
                             res.status(responseData.status).json({
                                 ...responseData.data,
