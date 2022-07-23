@@ -7,7 +7,7 @@ import {
     Service,
     generateListener,
     DependencyImpl,
-    DependencyOptions, GuardFunction
+    DependencyOptions
 } from "../src";
 
 import request from "supertest";
