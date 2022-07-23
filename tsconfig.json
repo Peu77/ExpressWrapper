@@ -12,6 +12,17 @@
     "experimentalDecorators": true,
     "sourceMap": true,
     "declaration": true,
-    "esModuleInterop": true
-  }
+    "esModuleInterop": true,
+    "types": [
+      "node",
+      "jest"
+    ],
+    "rootDir": "src"
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "src/**/*.test.ts"
+  ]
 }
