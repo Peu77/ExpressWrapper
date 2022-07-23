@@ -138,6 +138,25 @@ export function initControllers(express: Express, controllers: Controller[]): vo
                             }
 
                             // handle guards
+                            const guards: GuardFunction[] = route.guards;
+                            if (guards.length > 0) {
+                                const successGuards: GuardFunction[] = guards.filter((guard: GuardFunction) => {
+                                        const serviceResponseData: ServiceResponseData = guard(data);
+                                        data = {...data, ...serviceResponseData.data};
+                                        return serviceResponseData.success
+                                    }
+                                );
+
+                                // check if all guards are satisfied
+                                if (successGuards.length !== guards.length) {
+                                    const failedGuards: GuardFunction[] = guards.filter(guard => !successGuards.includes(guard));
+                                    const messages: string[] = failedGuards.map((guard: GuardFunction) => guard(data).message);
+                                    res.status(400).json({
+                                        guardProblems: messages
+                                    });
+                                    return;
+                                }
+                            }
 
                             const responseData: ServiceResponseData = requestListener.execute(data);
                             res.status(responseData.status).json({
