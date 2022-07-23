@@ -34,7 +34,7 @@ import {
 ```typescript
 const service: Service = {
     listeners: [
-        generateListener(RouteType.POST, "isEmail", (data: any) => {
+        generateListener(RouteType.POST, "test", (data: any) => {
             return {
                 success: true,
                 message: "finished",
