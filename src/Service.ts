@@ -7,7 +7,7 @@ export type Service = {
 
 export type RequestListener = {
     route: Route
-    execute: (data: any) => ServiceResponseData
+    execute: (data: any) => Promise<ServiceResponseData>
 }
 
 export type ServiceResponseData = {
@@ -23,7 +23,7 @@ export type ServiceResponseData = {
  * @param routePath
  * @param execute
  */
-export function generateListener(routeType: RouteType, routePath: string, execute: (data: any) => ServiceResponseData): RequestListener {
+export function generateListener(routeType: RouteType, routePath: string, execute: (data: any) => Promise<ServiceResponseData>): RequestListener {
     return {
         route: {
             type: routeType,
