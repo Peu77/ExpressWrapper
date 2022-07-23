@@ -27,7 +27,9 @@ export function generateListener(routeType: RouteType, routePath: string, execut
     return {
         route: {
             type: routeType,
-            path: routePath
+            path: routePath,
+            guards: [],
+            dependencies: []
         },
         execute
     }
