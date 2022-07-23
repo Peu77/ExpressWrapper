@@ -5,8 +5,7 @@
   "main": "build/index.js",
   "scripts": {
     "build": "tsc -p .",
-    "test": "jest -i",
-    "debug": "ts-node src/debug.ts"
+    "test": "jest -i"
   },
   "repository": {
     "type": "git",
