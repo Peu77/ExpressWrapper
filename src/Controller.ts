@@ -117,6 +117,7 @@ export function initControllers(express: Express, controllers: Controller[]): vo
                             }
 
                             // data which will be sent to the execute function
+                            req.body = {...req.body, ...req.query};
                             let data: any = req.body;
 
                             // check dependencies
