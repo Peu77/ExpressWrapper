@@ -1,7 +1,6 @@
 import {RequestListener, Service, ServiceResponseData} from "./Service";
-import {Express} from "express";
+import {Express, json, urlencoded} from "express";
 import {GuardFunction} from "./Guard";
-import bodyParser from "body-parser";
 
 export type Controller = {
     prefix: string,
@@ -88,7 +87,8 @@ export enum RouteType {
  * @param controllers
  */
 export function initControllers(express: Express, controllers: Controller[]): void {
-    express.use(bodyParser())
+    express.use(json())
+    express.use(urlencoded({extended: true}))
     controllers.forEach(controller => {
             controller.routes.forEach(route => {
                     express[route.type.toString()](`${controller.prefix}/${route.path}`, (

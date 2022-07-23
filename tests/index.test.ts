@@ -66,7 +66,8 @@ const controller: Controller = {
 
 
 const app = express();
-const server = app.listen(3000, () => {
+
+const server = app.listen(0, () => {
     initControllers(app, [controller]);
 })
 
