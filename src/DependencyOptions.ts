@@ -5,7 +5,7 @@ import {DependencyOption, DependencyOptionResponse} from "./Controller";
  * @param minLength
  */
 function getMinLengthOption(minLength: number): DependencyOption<string> {
-    return (value: string): DependencyOptionResponse => {
+    return async (value: string): Promise<DependencyOptionResponse> => {
         const success: boolean = value.length >= minLength
         return {
             success: success,
@@ -19,7 +19,7 @@ function getMinLengthOption(minLength: number): DependencyOption<string> {
  * @param maxLength
  */
 function getMaxLengthOption(maxLength: number): DependencyOption<string> {
-    return (value: string): DependencyOptionResponse => {
+    return async (value: string): Promise<DependencyOptionResponse> => {
         const success: boolean = value.length <= maxLength
         return {
             success: success,
@@ -32,7 +32,7 @@ function getMaxLengthOption(maxLength: number): DependencyOption<string> {
  * dependency to check if value is an email
  * @param value
  */
-const isEmailOption: DependencyOption<string> = (value: string) => {
+const isEmailOption: DependencyOption<string> = async (value: string): Promise<DependencyOptionResponse> => {
     const success: boolean = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
     return {

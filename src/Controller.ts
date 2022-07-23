@@ -13,7 +13,7 @@ export type DependencyOptionResponse = {
     message: string,
 }
 
-export type DependencyOption<T> = (value: T) => DependencyOptionResponse;
+export type DependencyOption<T> = (value: T) => Promise<DependencyOptionResponse>;
 
 export type DependencyResponse = {
     success: boolean,
@@ -22,7 +22,7 @@ export type DependencyResponse = {
 
 type Dependency = {
     valueName: string,
-    check(data: any): DependencyResponse
+    check(data: any): Promise<DependencyResponse>
     option: DependencyOption<any>[]
 }
 
@@ -39,7 +39,7 @@ export class DependencyImpl implements Dependency {
      * check if the value is in the data and check all options
      * @param data
      */
-    check(data: any): DependencyResponse {
+    async check(data: any): Promise<DependencyResponse> {
         let messages: string[] = [];
         let success: boolean = true;
 
@@ -51,14 +51,14 @@ export class DependencyImpl implements Dependency {
 
         // execute only if the success has been set to true
         if (success)
-            this.option.forEach((option: DependencyOption<any>) => {
+            await Promise.all(this.option.map(async (option: DependencyOption<any>) => {
                 // execute the option function and check if it is false
-                const optionResponse: DependencyOptionResponse = option(data[this.valueName]);
+                const optionResponse: DependencyOptionResponse = await option(data[this.valueName]);
                 if (!optionResponse.success) {
                     success = false;
                     messages.push(optionResponse.message);
                 }
-            })
+            }))
 
         return {
             success: success,
@@ -82,6 +82,17 @@ export enum RouteType {
 }
 
 /**
+ * async filter function
+ */
+export async function filter<T>(array: T[], predicate: (value: T) => Promise<boolean>): Promise<T[]> {
+    return (await Promise.all(array.map(async (value: T) => {
+        const result: boolean = await predicate(value);
+        if (result)
+            return value;
+    }))).filter((value: T) => value !== undefined && value !== null);
+}
+
+/**
  * register all controllers and their services routes to the Express app
  * @param express
  * @param controllers
@@ -91,7 +102,7 @@ export function initControllers(express: Express, controllers: Controller[]): vo
     express.use(urlencoded({extended: true}))
     controllers.forEach(controller => {
             controller.routes.forEach(route => {
-                    express[route.type.toString()](`${controller.prefix}/${route.path}`, (
+                    express[route.type.toString()](`${controller.prefix}/${route.path}`, async (
                             req: any, res: any
                         ) => {
                             // find request listener by route path and type
@@ -116,17 +127,16 @@ export function initControllers(express: Express, controllers: Controller[]): vo
                                     return;
                                 }
 
-                                const successDependencies: Dependency[] = dependencies.filter(
-                                    (dependency: Dependency) => {
-                                        const dependencyResponse: DependencyResponse = dependency.check(data);
-                                        return dependencyResponse.success;
-                                    }
-                                );
+                                const successDependencies: Dependency[] = await filter(dependencies, async (dependency: Dependency) => {
+                                    const dependencyResponse: DependencyResponse = await dependency.check(data);
+                                    return dependencyResponse.success;
+                                })
+
 
                                 // check if all dependencies are satisfied
                                 if (successDependencies.length !== dependencies.length) {
                                     const failedDependencies: Dependency[] = dependencies.filter(dependency => !successDependencies.includes(dependency));
-                                    const messages: string[][] = failedDependencies.map(dependency => [`${dependency.valueName} is not satisfied because:`, ...dependency.check(req.body).messages]);
+                                    const messages: string[][] = await Promise.all(failedDependencies.map(async (dependency: Dependency) => [`${dependency.valueName} is not satisfied because:`, ...(await dependency.check(req.body)).messages]));
                                     res.status(400).json(messages);
                                     return;
                                 }
@@ -140,17 +150,16 @@ export function initControllers(express: Express, controllers: Controller[]): vo
                             // handle guards
                             const guards: GuardFunction[] = route.guards;
                             if (guards.length > 0) {
-                                const successGuards: GuardFunction[] = guards.filter((guard: GuardFunction) => {
-                                        const serviceResponseData: ServiceResponseData = guard(data);
-                                        data = {...data, ...serviceResponseData.data};
-                                        return serviceResponseData.success
-                                    }
-                                );
+                                const successGuards: GuardFunction[] = await filter(guards, async (guard: GuardFunction) => {
+                                    const serviceResponseData: ServiceResponseData = await guard(data);
+                                    data = {...data, ...serviceResponseData.data};
+                                    return serviceResponseData.success
+                                })
 
                                 // check if all guards are satisfied
                                 if (successGuards.length !== guards.length) {
                                     const failedGuards: GuardFunction[] = guards.filter(guard => !successGuards.includes(guard));
-                                    const messages: string[] = failedGuards.map((guard: GuardFunction) => guard(data).message);
+                                    const messages: string[] = await Promise.all(failedGuards.map(async (guard: GuardFunction) => (await guard(data)).message));
                                     res.status(400).json({
                                         guardProblems: messages
                                     });
@@ -158,7 +167,7 @@ export function initControllers(express: Express, controllers: Controller[]): vo
                                 }
                             }
 
-                            const responseData: ServiceResponseData = requestListener.execute(data);
+                            const responseData: ServiceResponseData = await requestListener.execute(data);
                             res.status(responseData.status).json({
                                 ...responseData.data,
                                 message: responseData.message

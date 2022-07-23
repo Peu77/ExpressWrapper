@@ -14,7 +14,7 @@ import request from "supertest";
 
 const service: Service = {
     listeners: [
-        generateListener(RouteType.POST, "isEmail", async (data: any) => {
+        generateListener(RouteType.POST, "isEmail", (data: any) => {
             return {
                 success: true,
                 message: "finished",
@@ -23,7 +23,7 @@ const service: Service = {
             }
         }),
 
-        generateListener(RouteType.POST, "user", async (data: any) => {
+        generateListener(RouteType.POST, "user", (data: any) => {
             return {
                 success: true,
                 message: "finished",
@@ -85,59 +85,7 @@ const controller: Controller = {
 
 
 const app = express();
-const server = app.listen(0, () => {
+const server = app.listen(3000, () => {
     initControllers(app, [controller]);
-})
-
-describe("Test application", () => {
-    test("value test", async () => {
-        const res = await request(app).post("/api/isEmail").send({})
-
-        expect(res.statusCode).toBe(400);
-    })
-
-    test("email test", async () => {
-        const res = await request(app).post("/api/isEmail").send({
-            email: "test@test.de"
-        })
-
-        expect(res.statusCode).toBe(200);
-    })
-
-    test("max length test", async () => {
-        const res = await request(app).post("/api/isEmail").send({
-            email: "gwe@tegwegwst.degweg"
-        })
-
-        expect(res.statusCode).toBe(400);
-    })
-
-    test("min length test", async () => {
-        const res = await request(app).post("/api/isEmail").send({
-            email: "t@te.de"
-        })
-
-        expect(res.statusCode).toBe(400);
-    })
-
-    test("guard test 1", async () => {
-        const res = await request(app).post("/api/user").send({
-            user: "secretf"
-        })
-
-        expect(res.statusCode).toBe(400);
-    })
-
-    test("guard test 2", async () => {
-        const res = await request(app).post("/api/user").send({
-            user: "secret"
-        })
-
-        expect(res.statusCode).toBe(200);
-        expect(res.body.userData).toBe("important data");
-    })
-})
-
-afterAll(async () => {
-    await server.close()
+    console.log("init server")
 })
