@@ -25,26 +25,6 @@ const service: Service = {
     ]
 }
 
-const guard: GuardFunction = (data: any) => {
-    if (data.tests.length < 10) {
-        return {
-            success: false,
-            message: "tests length must be greater than 10",
-            status: 400,
-            data: {}
-        }
-    }
-
-    return {
-        success: true,
-        message: "",
-        status: 200,
-        data: {
-            tests: data.tests
-        }
-    }
-}
-
 const controller: Controller = {
     prefix: "/api",
     service: service,
@@ -66,7 +46,6 @@ const controller: Controller = {
 
 
 const app = express();
-
 const server = app.listen(0, () => {
     initControllers(app, [controller]);
 })
