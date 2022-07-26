@@ -118,9 +118,7 @@ export function initControllers(express: Express, controllers: Controller[]): vo
 
 
                             // data which will be sent to the execute function
-                            let data: any = {...req.body, ...req.query};
-
-                            data.headers = req.headers;
+                            let data: any = {...req.body, ...req.query, headers: req.headers};
 
                             // check dependencies
                             const dependencies: Dependency[] = route.dependencies;
@@ -130,17 +128,18 @@ export function initControllers(express: Express, controllers: Controller[]): vo
                                     return;
                                 }
 
+                                const errorMessages: string[][] = []
                                 const successDependencies: Dependency[] = await filter(dependencies, async (dependency: Dependency) => {
                                     const dependencyResponse: DependencyResponse = await dependency.check(data);
+                                    if (!dependencyResponse.success)
+                                        errorMessages.push([`${dependency.valueName} is not satisfied because:`, ...dependencyResponse.messages]);
                                     return dependencyResponse.success;
                                 })
 
 
                                 // check if all dependencies are satisfied
-                                if (successDependencies.length !== dependencies.length) {
-                                    const failedDependencies: Dependency[] = dependencies.filter(dependency => !successDependencies.includes(dependency));
-                                    const messages: string[][] = await Promise.all(failedDependencies.map(async (dependency: Dependency) => [`${dependency.valueName} is not satisfied because:`, ...(await dependency.check(req.body)).messages]));
-                                    res.status(400).json(messages);
+                                if (errorMessages.length > 0) {
+                                    res.status(400).json(errorMessages);
                                     return;
                                 }
 
@@ -153,18 +152,23 @@ export function initControllers(express: Express, controllers: Controller[]): vo
                             // handle guards
                             const guards: GuardFunction[] = route.guards;
                             if (guards.length > 0) {
-                                const successGuards: GuardFunction[] = await filter(guards, async (guard: GuardFunction) => {
-                                    const serviceResponseData: ServiceResponseData = await guard(data);
-                                    data = {...data, ...serviceResponseData.data};
+                                const errorMessages: string[] = []
+
+                                await filter(guards, async (guard: GuardFunction) => {
+                                    const serviceResponseData: ServiceResponseData = await guard(data)
+                                    // pass only further if the guard had no error
+                                    if (serviceResponseData.success)
+                                        data = {...data, ...serviceResponseData.data};
+                                    else
+                                        errorMessages.push(serviceResponseData.message);
+
                                     return serviceResponseData.success
                                 })
 
                                 // check if all guards are satisfied
-                                if (successGuards.length !== guards.length) {
-                                    const failedGuards: GuardFunction[] = guards.filter(guard => !successGuards.includes(guard));
-                                    const messages: string[] = await Promise.all(failedGuards.map(async (guard: GuardFunction) => (await guard(data)).message));
+                                if (errorMessages.length > 0) {
                                     res.status(400).json({
-                                        guardProblems: messages
+                                        guardProblems: errorMessages
                                     });
                                     return;
                                 }

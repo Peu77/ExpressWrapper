@@ -32,6 +32,17 @@ const service: Service = {
                     userData: data.userData
                 }
             }
+        }),
+
+        generateListener(RouteType.GET, "headers", async (data: any) => {
+            return {
+                success: true,
+                message: "finished",
+                status: 200,
+                data: {
+                    test: data.headers.test
+                }
+            }
         })
     ]
 }
@@ -79,6 +90,13 @@ const controller: Controller = {
             dependencies: [
                 new DependencyImpl("user", [])
             ]
+        },
+
+        {
+            path: "headers",
+            type: RouteType.GET,
+            guards: [],
+            dependencies: []
         }
     ]
 }
@@ -135,6 +153,15 @@ describe("Test application", () => {
 
         expect(res.statusCode).toBe(200);
         expect(res.body.userData).toBe("important data");
+    })
+
+    test("test headers", async () => {
+        const res = await request(app)
+            .get("/api/headers").send({})
+            .set("test", "value")
+
+        expect(res.statusCode).toBe(200);
+        expect(res.body.test).toBe("value");
     })
 })
 
