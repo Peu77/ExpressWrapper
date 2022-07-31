@@ -1,6 +1,6 @@
 # ExpressWrapper
 
-[![install size](https://packagephobia.com/badge?p=@peu77/expresswrapper)](https://packagephobia.com/result?p=@bergerapi/env)
+[![install size](https://packagephobia.com/badge?p=@peu77/expresswrapper)](https://packagephobia.com/result?p=@peu77/expresswrapper)
 
 Simple construct for an express application.
 
